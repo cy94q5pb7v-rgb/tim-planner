@@ -258,7 +258,7 @@ tim-planner/
 │  ├─ core/
 │  │  ├─ auth.py            # PBKDF2-пароли + JWT-cookie + зависимость авторизации
 │  │  ├─ users.py           # пользователи из data/users.json
-│  │  └─ openclaw.py        # подключаемый ИИ-агент чата (API/CLI/выкл)
+│  │   └─ agent.py           # подключаемый ИИ-агент чата (API/CLI/выкл)
 │  └─ planner/
 │     ├─ planner_api.py     # JSON-API доски (state/mutate/people/chat/presence/upload/github-sync…)
 │     ├─ db.py              # SQLite-слой (доска, чат, присутствие, история)

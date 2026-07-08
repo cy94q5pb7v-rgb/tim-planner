@@ -1207,7 +1207,7 @@ class Component extends DCLogic {
       .then(r=>r.ok?r.json():null)
       .then(d=>{ if(d && d.username){ this._me = d.username; this.forceUpdate(); } })
       .catch(()=>{});
-    // люди = пользователи openclaw с галочкой доступа к Планеру (не заглушки)
+    // люди = пользователи с доступом к Планеру
     fetch('/api/planner/people',{headers:{'accept':'application/json'},credentials:'same-origin'})
       .then(r=>r.ok?r.json():null)
       .then(d=>{ if(d && Array.isArray(d.people)){ this.people = d.people; this.forceUpdate(); } })
