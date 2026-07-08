@@ -18,8 +18,8 @@ from fastapi.responses import (HTMLResponse, RedirectResponse, JSONResponse,
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import config
-from core.auth import _require_auth, _make_token, _verify_password  # noqa: F401
-from core.users import _find_user, _load_users                      # noqa: F401
+from core.auth import _require_auth, _require_admin, _make_token, _verify_password  # noqa: F401
+from core.users import _find_user, _load_users                                     # noqa: F401
 
 _FRONTEND = Path(config.FRONTEND_DIR)
 
@@ -194,7 +194,21 @@ async def planner_asset(path: str, user: str = Depends(_require_auth)):
 
 
 # ---------------------------------------------------------------------------
-# Подключаем JSON-API планера (импорт ПОСЛЕ определения имён выше)
+# Админка: страница /admin (только is_admin) + API управления пользователями
+# ---------------------------------------------------------------------------
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page(user: str = Depends(_require_auth)):
+    u = _find_user(user)
+    if not u or not u.get("is_admin"):
+        return RedirectResponse("/planner/", status_code=303)
+    return FileResponse(str(_FRONTEND / "admin.html"), media_type="text/html")
+
+
+# ---------------------------------------------------------------------------
+# Подключаем роутеры (импорт ПОСЛЕ определения имён выше)
 # ---------------------------------------------------------------------------
 from planner import planner_api  # noqa: E402
 app.include_router(planner_api.router)
+
+import admin_api  # noqa: E402
+app.include_router(admin_api.router)

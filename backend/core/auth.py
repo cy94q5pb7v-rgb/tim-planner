@@ -59,3 +59,13 @@ def _require_auth(request: Request) -> str:
     if not user:
         raise HTTPException(status_code=401, detail="auth required")
     return user
+
+
+def _require_admin(request: Request) -> str:
+    """Только для администраторов (is_admin). Иначе 403 (для API) / 401→логин (для навигации)."""
+    user = _require_auth(request)
+    from core.users import _find_user
+    u = _find_user(user)
+    if not u or not u.get("is_admin"):
+        raise HTTPException(status_code=403, detail="admin only")
+    return user

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Администрирование · ТИМ Планер</title>
+<style>
+  :root{--accent:#3D6BE5;--line:#e2e6ec;--muted:#7a828f}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#eef1f6;color:#1a1e27;margin:0}
+  header{background:#fff;border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;gap:14px}
+  header h1{font-size:16px;margin:0;font-weight:800}
+  header a{margin-left:auto;color:var(--accent);text-decoration:none;font-weight:600;font-size:13px}
+  header a+a{margin-left:16px}
+  .wrap{max-width:1000px;margin:24px auto;padding:0 24px;display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  h2{font-size:14px;margin:0 0 14px;font-weight:800}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:9px 8px;border-bottom:1px solid #eef0f3;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px}
+  .b-admin{background:#fdeede;color:#a8620a}.b-pl{background:#e6eeff;color:#2e5bd6}.b-no{background:#eef0f3;color:#8a909c}
+  .roles{color:#565b66;font-size:12px}
+  .rowbtns button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 9px;font-size:12px;cursor:pointer;font-weight:600}
+  .rowbtns button.del{color:#c02434;border-color:#f2c9cf}
+  label{display:block;font-size:12px;font-weight:700;color:#565b66;margin:12px 0 5px}
+  input[type=text],input[type=password]{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;outline:none}
+  input:focus{border-color:var(--accent)}
+  .chk{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin:8px 0;cursor:pointer}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer;user-select:none}
+  .chip input{margin:0}
+  .actions{display:flex;gap:9px;margin-top:18px}
+  button.primary{border:none;background:var(--accent);color:#fff;font-weight:700;font-size:13px;padding:10px 16px;border-radius:9px;cursor:pointer;flex:1}
+  button.ghost{border:1px solid var(--line);background:#fff;color:#565b66;font-weight:700;font-size:13px;padding:10px 14px;border-radius:9px;cursor:pointer}
+  .msg{font-size:12.5px;font-weight:600;margin-top:12px;padding:8px 11px;border-radius:8px;display:none}
+  .msg.ok{display:block;background:#e3f5ea;color:#1e8e4e}
+  .msg.err{display:block;background:#fdecee;color:#c02434}
+  .hint{color:var(--muted);font-size:11.5px;margin-top:5px}
+  @media(max-width:820px){.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Администрирование · ТИМ Планер</h1>
+  <a href="/planner/">← К Планеру</a>
+  <a href="/logout">Выход</a>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>Пользователи</h2>
+    <table>
+      <thead><tr><th>Логин</th><th>Доступ</th><th>Роли</th><th></th></tr></thead>
+      <tbody id="rows"><tr><td colspan="4" style="color:#9aa0ad">Загрузка…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2 id="formTitle">Новый пользователь</h2>
+    <label>Логин</label>
+    <input type="text" id="fUser" autocomplete="off" placeholder="ivanov">
+    <label>Пароль <span id="pwOpt" class="hint" style="display:none">(пусто = не менять)</span></label>
+    <input type="password" id="fPass" autocomplete="new-password" placeholder="пароль">
+    <label class="chk"><input type="checkbox" id="fAdmin"> Администратор (полный доступ)</label>
+    <label class="chk"><input type="checkbox" id="fPlanner"> Доступ к Планеру</label>
+    <label>Роли</label>
+    <div class="chips" id="fRoles"></div>
+    <div class="actions">
+      <button class="primary" id="saveBtn">Сохранить</button>
+      <button class="ghost" id="resetBtn">Очистить</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let ROLES = [];
+
+function msg(text, ok){ const m=$('#msg'); m.textContent=text; m.className='msg '+(ok?'ok':'err'); }
+function clearMsg(){ $('#msg').className='msg'; }
+
+async function api(path, opts){
+  const r = await fetch(path, Object.assign({credentials:'same-origin', headers:{'Content-Type':'application/json'}}, opts||{}));
+  let d = null; try{ d = await r.json(); }catch(e){}
+  if(!r.ok){ throw new Error((d && d.detail) || ('HTTP '+r.status)); }
+  return d;
+}
+
+function renderRoleChips(selected){
+  selected = selected || [];
+  $('#fRoles').innerHTML = ROLES.map(r =>
+    '<label class="chip"><input type="checkbox" value="'+r.id+'"'+(selected.includes(r.id)?' checked':'')+'> '+r.label+'</label>'
+  ).join('');
+}
+
+function selectedRoles(){ return [...document.querySelectorAll('#fRoles input:checked')].map(i=>i.value); }
+
+function resetForm(){
+  $('#formTitle').textContent='Новый пользователь';
+  $('#fUser').value=''; $('#fUser').readOnly=false; $('#fPass').value='';
+  $('#pwOpt').style.display='none';
+  $('#fAdmin').checked=false; $('#fPlanner').checked=false;
+  renderRoleChips([]); clearMsg();
+}
+
+function editUser(u){
+  $('#formTitle').textContent='Редактирование: '+u.username;
+  $('#fUser').value=u.username; $('#fUser').readOnly=true; $('#fPass').value='';
+  $('#pwOpt').style.display='inline';
+  $('#fAdmin').checked=u.is_admin; $('#fPlanner').checked=u.planner_access;
+  renderRoleChips(u.roles); clearMsg();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function loadUsers(){
+  const d = await api('/api/admin/users');
+  const rows = d.users.map(u => {
+    const access = u.is_admin ? '<span class="badge b-admin">админ</span>'
+      : (u.planner_access ? '<span class="badge b-pl">планер</span>' : '<span class="badge b-no">нет</span>');
+    const roles = (u.roles||[]).map(rid => (ROLES.find(x=>x.id===rid)||{}).label||rid).join(', ') || '—';
+    return '<tr><td><b>'+u.username+'</b></td><td>'+access+'</td><td class="roles">'+roles+'</td>'+
+      '<td class="rowbtns" style="text-align:right;white-space:nowrap">'+
+      '<button data-edit=\''+JSON.stringify(u).replace(/'/g,"&#39;")+'\'>Изм.</button> '+
+      '<button class="del" data-del="'+u.username+'">Удалить</button></td></tr>';
+  }).join('');
+  $('#rows').innerHTML = rows || '<tr><td colspan="4" style="color:#9aa0ad">Нет пользователей</td></tr>';
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editUser(JSON.parse(b.getAttribute('data-edit'))));
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delUser(b.getAttribute('data-del')));
+}
+
+async function delUser(username){
+  if(!confirm('Удалить пользователя «'+username+'»?')) return;
+  try{ await api('/api/admin/users/'+encodeURIComponent(username), {method:'DELETE'}); await loadUsers(); msg('Удалён: '+username, true); }
+  catch(e){ msg(e.message, false); }
+}
+
+$('#saveBtn').onclick = async () => {
+  const payload = {
+    username: $('#fUser').value.trim(),
+    password: $('#fPass').value,
+    is_admin: $('#fAdmin').checked,
+    planner_access: $('#fPlanner').checked,
+    roles: selectedRoles(),
+  };
+  if(!payload.username){ msg('Укажите логин', false); return; }
+  try{
+    const d = await api('/api/admin/users', {method:'POST', body:JSON.stringify(payload)});
+    await loadUsers();
+    msg((d.created?'Создан: ':'Сохранён: ')+payload.username, true);
+    if(d.created) resetForm();
+  }catch(e){ msg(e.message, false); }
+};
+$('#resetBtn').onclick = resetForm;
+
+(async function init(){
+  try{
+    ROLES = (await api('/api/admin/roles')).roles;
+    renderRoleChips([]);
+    await loadUsers();
+  }catch(e){ $('#rows').innerHTML='<tr><td colspan="4" style="color:#c02434">Ошибка: '+e.message+'</td></tr>'; }
+})();
+</script>
+</body>
+</html>
