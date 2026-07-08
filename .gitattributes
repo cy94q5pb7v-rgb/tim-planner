@@ -1,0 +1,8 @@
+# Единые окончания строк LF во всём репозитории (важно для деплоя на Linux:
+# run.sh, systemd-юнит, python — должны быть LF).
+* text=auto eol=lf
+
+# бинарные ассеты
+*.woff2 binary
+*.png binary
+*.ico binary

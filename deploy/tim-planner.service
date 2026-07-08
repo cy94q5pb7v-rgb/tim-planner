@@ -1,0 +1,23 @@
+# systemd-юнит для ТИМ Планера (запуск без Docker).
+# 1) Отредактируйте User/пути под свой сервер.
+# 2) sudo cp deploy/tim-planner.service /etc/systemd/system/
+# 3) sudo systemctl daemon-reload && sudo systemctl enable --now tim-planner
+# 4) Логи:  journalctl -u tim-planner -f
+
+[Unit]
+Description=ТИМ Планер (FastAPI/uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=planner
+Group=planner
+WorkingDirectory=/opt/tim-planner/backend
+EnvironmentFile=/opt/tim-planner/.env
+# один воркер обязателен (presence/board-lock в памяти процесса)
+ExecStart=/opt/tim-planner/.venv/bin/uvicorn web_app:app --host 0.0.0.0 --port 8000 --workers 1
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

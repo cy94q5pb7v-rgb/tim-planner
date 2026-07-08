@@ -1,0 +1,15 @@
+services:
+  planner:
+    build: .
+    image: tim-planner
+    container_name: tim-planner
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - planner_data:/data
+
+volumes:
+  planner_data:
