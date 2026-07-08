@@ -21,7 +21,7 @@ _agent_lock = threading.Lock()
 def _run_planner_agent(question: str, context: str = ""):
     """Фоново: спросить подключённого ИИ-агента (core.agent.run_agent) и
     опубликовать ответ в чат. context — компактный текстовый снапшот доски.
-    Режим агента (API/CLI/выкл) настраивается через .env — см. core/openclaw.py."""
+    Режим агента (API/CLI/выкл) настраивается через .env — см. core/agent.py."""
     try:
         from core.agent import run_agent
         with _agent_lock:

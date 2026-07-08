@@ -81,7 +81,7 @@ FastAPI (backend/web_app.py)
         ├─ доска (rev + tasks + epics) в SQLite  (planner/db.py)
         ├─ вложения на диске                       (planner/files.py)
         ├─ GitHub-синхронизация (опц.)             (planner/github.py)
-        ├─ ИИ-агент чата (опц.)                    (core/openclaw.py)
+        ├─ ИИ-агент чата (опц.)                    (core/agent.py)
         └─ почтовые уведомления (опц.)             (planner/notify.py)
 ```
 
