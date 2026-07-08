@@ -1286,7 +1286,8 @@ class Component extends DCLogic {
       if(!loc || !loc.id) return; seen.add(loc.id);
       const srv=srvById[loc.id], syn=syncById[loc.id];
       if(!srv){ if(syn===undefined){ result.push(loc); dirty=true; } return; } // локально создано и ещё не синкнуто → сохранить
-      const locClean=JSON.stringify(this._clean(loc));
+      // эпики сравниваем СЫРЫМИ (как в _computeOps и _synced); _clean добавляет files:[] и ломает сравнение эпиков → ping-pong порядка
+      const locClean=JSON.stringify(isTask ? this._clean(loc) : loc);
       const isDirty = (syn===undefined) || (locClean!==JSON.stringify(syn));
       if(isDirty){ result.push(isTask ? this._mergeArrays(loc, srv) : loc); dirty=true; }
       else result.push(srv);
